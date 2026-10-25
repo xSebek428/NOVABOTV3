@@ -12,9 +12,13 @@ base {
 }
 
 repositories {
-    maven { name = 'opencollab-releases'; url = 'https://repo.opencollab.dev/maven-releases/' }
-    maven { name = 'opencollab-main'; url = 'https://repo.opencollab.dev/main/' }
     mavenCentral()
+    // JitPack: tu leży MCProtocolLib 1.21.4-1 (w repo opencollab tej wersji nie ma)
+    maven {
+        name = 'JitPack'
+        url = 'https://jitpack.io'
+        content { includeGroupByRegex 'com\\.github\\..*' }
+    }
 }
 
 configurations {
@@ -23,30 +27,43 @@ configurations {
     implementation.extendsFrom shade
 }
 
+configurations.shade {
+    // To wszystko Minecraft już ma - nie dublujemy (inaczej klasy się gryzą).
+    exclude group: 'org.slf4j'
+    exclude group: 'com.google.code.gson'
+    exclude group: 'com.google.guava'
+    exclude group: 'it.unimi.dsi'
+    exclude group: 'org.jetbrains'
+    exclude group: 'io.netty', module: 'netty-all'
+    exclude group: 'io.netty.incubator'
+    exclude group: 'io.netty', module: 'netty-buffer'
+    exclude group: 'io.netty', module: 'netty-common'
+    exclude group: 'io.netty', module: 'netty-codec'
+    exclude group: 'io.netty', module: 'netty-handler'
+    exclude group: 'io.netty', module: 'netty-resolver'
+    exclude group: 'io.netty', module: 'netty-transport'
+    exclude group: 'io.netty', module: 'netty-transport-classes-epoll'
+    exclude group: 'io.netty', module: 'netty-transport-native-epoll'
+    exclude group: 'io.netty', module: 'netty-transport-native-unix-common'
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    shade("org.geysermc.mcprotocollib:protocol:${project.mcprotocollib_version}") {
-        // To wszystko Minecraft już ma - nie dublujemy.
-        exclude group: 'org.slf4j'
-        exclude group: 'com.google.code.gson'
-        exclude group: 'com.google.guava'
-        exclude group: 'it.unimi.dsi'
-        exclude group: 'org.jetbrains'
-        exclude group: 'io.netty', module: 'netty-buffer'
-        exclude group: 'io.netty', module: 'netty-common'
-        exclude group: 'io.netty', module: 'netty-codec'
-        exclude group: 'io.netty', module: 'netty-handler'
-        exclude group: 'io.netty', module: 'netty-resolver'
-        exclude group: 'io.netty', module: 'netty-transport'
-        exclude group: 'io.netty', module: 'netty-transport-classes-epoll'
-        exclude group: 'io.netty', module: 'netty-transport-native-epoll'
-        exclude group: 'io.netty', module: 'netty-transport-native-unix-common'
-    }
+    // Biblioteka protokołu Minecrafta - to ona łączy bota z serwerem
+    shade "com.github.GeyserMC:MCProtocolLib:${project.mcprotocollib_version}"
     shade 'net.kyori:adventure-api:4.17.0'
+
+    // Moduły Netty, których Minecraft nie ma (DNS, proxy) - wersja jak w Minecraft 1.21.4
+    shade 'io.netty:netty-resolver-dns:4.1.115.Final'
+    shade 'io.netty:netty-codec-dns:4.1.115.Final'
+    shade 'io.netty:netty-handler-proxy:4.1.115.Final'
+    shade 'io.netty:netty-codec-socks:4.1.115.Final'
+    shade 'io.netty:netty-codec-http:4.1.115.Final'
+    shade 'io.netty:netty-codec-haproxy:4.1.115.Final'
 }
 
 processResources {
